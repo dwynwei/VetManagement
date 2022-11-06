@@ -1,0 +1,55 @@
+version: '3.1'
+services :
+  db:
+    image: postgres:10-alpine
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: user1
+      POSTGRES_PASSWORD: 123456
+      POSTGRES_DB: vetdb
+      
+  admin:
+    image: adminer
+    restart: always
+    depends_on: 
+      - db
+    ports:
+      - 10005:8080
+      
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - 22181:2181
+  
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    depends_on:
+      - zookeeper
+    ports:
+      - 29092:29092
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+   
+  rabbit1:
+     image: "rabbitmq:3-management"
+     hostname: "rabbit1"
+     environment:
+       RABBITMQ_ERLANG_COOKIE: "SWQOKODSQALRPCLNMEQG"
+       RABBITMQ_DEFAULT_USER: "rabbitmq"
+       RABBITMQ_DEFAULT_PASS: "rabbitmq"
+       RABBITMQ_DEFAULT_VHOST: "/"
+     ports:
+       - "15672:15672"
+       - "5672:5672"
+     labels:
+       NAME: "rabbitmq1"
